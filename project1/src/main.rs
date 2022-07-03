@@ -1,25 +1,39 @@
 //CRUD App
 
-use std::io;
+use std::{collections::HashMap, io};
 #[derive(Debug, Clone)]
 pub struct Student {
     name: String,
     age: i32,
 }
 pub struct Students {
-    class: Vec<Student>,
+    class: HashMap<String, Student>,
 }
 
 impl Students {
     fn new() -> Self {
-        Self { class: vec![] }
+        Self {
+            class: HashMap::new(),
+        }
     }
     fn add(&mut self, student: Student) {
-        self.class.push(student);
+        self.class.insert(student.name.to_string(), student);
     }
 
     fn view_all(&self) -> Vec<&Student> {
-        self.class.iter().collect()
+        self.class.values().collect()
+    }
+    fn remove(&mut self, name: &str) -> bool {
+        self.class.remove(name).is_some()
+    }
+    fn edit(&mut self, name: &str, age: i32) -> bool {
+        match self.class.get_mut(name) {
+            Some(name) => {
+                name.age = age;
+                true
+            }
+            None => false,
+        }
     }
 }
 
@@ -39,9 +53,42 @@ mod manager {
         };
         students.add(Student { name, age })
     }
-    pub fn view(students: &Students) {
+    pub fn view_students(students: &Students) {
         for student in students.view_all() {
             println!("{:?}", student);
+        }
+    }
+    pub fn remove_student(students: &mut Students) {
+        for student in students.view_all() {
+            println!("{:?}", student);
+        }
+        let name = match get_input() {
+            Some(name) => name,
+            None => return,
+        };
+        if students.remove(&name) {
+            println!("Removed the student");
+        } else {
+            println!("Not found!");
+        }
+    }
+    pub fn edit_student(students: &mut Students) {
+        for student in students.view_all() {
+            println!("{:?}", student);
+        }
+        let name = match get_input() {
+            Some(name) => name,
+            None => return,
+        };
+        let age = match get_int() {
+            Some(age) => age,
+            None => return,
+        };
+
+        if students.edit(&name, age) {
+            println!("Edited the student");
+        } else {
+            println!("Not found!");
         }
     }
 }
@@ -100,18 +147,22 @@ impl Manager {
         }
     }
 }
-
-fn main() {
+fn run_program() {
     let mut students = Students::new();
     loop {
         Manager::show();
         let input = get_input().expect("Please enter your choice");
         match Manager::choice(input.as_str()) {
             Some(Manager::AddStudent) => manager::add_student(&mut students),
-            Some(Manager::ViewStudent) => manager::view(&students),
-            Some(Manager::EditStudent) => (),
-            Some(Manager::RemoveStudent) => (),
-            None => return,
+            Some(Manager::ViewStudent) => manager::view_students(&students),
+            Some(Manager::EditStudent) => manager::edit_student(&mut students),
+            Some(Manager::RemoveStudent) => manager::remove_student(&mut students),
+            None => break,
         }
     }
+}
+
+fn main() {
+    run_program();
+    println!("program exited")
 }
