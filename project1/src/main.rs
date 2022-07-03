@@ -1,6 +1,50 @@
 //CRUD App
 
 use std::io;
+#[derive(Debug, Clone)]
+pub struct Student {
+    name: String,
+    age: i32,
+}
+pub struct Students {
+    class: Vec<Student>,
+}
+
+impl Students {
+    fn new() -> Self {
+        Self { class: vec![] }
+    }
+    fn add(&mut self, student: Student) {
+        self.class.push(student);
+    }
+
+    fn view_all(&self) -> Vec<&Student> {
+        self.class.iter().collect()
+    }
+}
+
+mod manager {
+    use crate::*;
+
+    pub fn add_student(students: &mut Students) {
+        println!("Enter name of student...");
+        let name = match get_input() {
+            Some(name) => name,
+            None => return,
+        };
+
+        let age = match get_int() {
+            Some(age) => age,
+            None => return,
+        };
+        students.add(Student { name, age })
+    }
+    pub fn view(students: &Students) {
+        for student in students.view_all() {
+            println!("{:?}", student);
+        }
+    }
+}
 
 fn get_input() -> Option<String> {
     let mut buffer = String::new();
@@ -8,10 +52,22 @@ fn get_input() -> Option<String> {
         println!("please try again...");
     }
     let input = buffer.trim().to_owned();
-    if &input == "" {
+    if input.is_empty() {
         None
     } else {
         Some(input)
+    }
+}
+fn get_int() -> Option<i32> {
+    println!("Enter age of student...");
+    let input = match get_input() {
+        Some(input) => input,
+        None => return None,
+    };
+    let parsed_input: Result<i32, _> = input.parse();
+    match parsed_input {
+        Ok(parsed_input) => Some(parsed_input),
+        Err(_) => None,
     }
 }
 
@@ -22,7 +78,7 @@ enum Manager {
     RemoveStudent,
 }
 impl Manager {
-    fn show() {
+    pub fn show() {
         println!(".....");
         println!("== Manager Panel ==");
         println!("....");
@@ -34,7 +90,7 @@ impl Manager {
         println!("Please enter your choice!");
         println!("....");
     }
-    fn choice(input: &str) -> Option<Manager> {
+    pub fn choice(input: &str) -> Option<Manager> {
         match input {
             "1" => Some(Manager::AddStudent),
             "2" => Some(Manager::ViewStudent),
@@ -46,12 +102,13 @@ impl Manager {
 }
 
 fn main() {
+    let mut students = Students::new();
     loop {
         Manager::show();
         let input = get_input().expect("Please enter your choice");
-        match Manager::choice(&input.as_str()) {
-            Some(Manager::AddStudent) => (),
-            Some(Manager::ViewStudent) => (),
+        match Manager::choice(input.as_str()) {
+            Some(Manager::AddStudent) => manager::add_student(&mut students),
+            Some(Manager::ViewStudent) => manager::view(&students),
             Some(Manager::EditStudent) => (),
             Some(Manager::RemoveStudent) => (),
             None => return,
